@@ -1,3 +1,4 @@
+
 # ArynCore MCP
 
 **ArynCore** is a local-first Master Control Program (MCP) designed to interface with multiple local LLMs, including automation, writing, and creative tools. This project uses a central bot (Aryn) to route conversations, tasks, and commands to specialized agents hosted on both CPU and GPU systems.
@@ -18,4 +19,7 @@
 - Connects via NKN and is orchestrated with Docker & n8n
 
 ---
+
+
+# aryncore-mcp
 
