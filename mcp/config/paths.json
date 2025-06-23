@@ -1,0 +1,11 @@
+{
+  "gpu_trigger_folders": {
+    "video_input": "/home/lorebot/Videos/to_render",
+    "audio_input": "/home/lorebot/Music/to_process",
+    "sdxl_input": "/home/lorebot/forge/models/input"
+  },
+  "model_paths": {
+    "stable_diffusion": "/home/lorebot/dev/main/ArynCore/docker/stable-diffusion/stable-diffusion-v1",
+    "ollama_models": "/mnt/gpu_models/ollama"
+  }
+}
