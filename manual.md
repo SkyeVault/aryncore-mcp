@@ -1,7 +1,7 @@
 
-# aryncore-mcp — Instruction Manual
+# aryncore-mcp Instruction Manual
 
-This manual covers everything needed to configure your router, run your AI models with Ollama, and use ArynCore as a modular command center.
+This manual covers everything needed to configure your router, run your AI models with Ollama, and use ArynCore as a modular command center. from the Forge GPU serve
 
 ---
 
@@ -10,11 +10,11 @@ This manual covers everything needed to configure your router, run your AI model
 To expose your AI model externally, you need to forward **port 11434** to your Forge device.
 
 ### Steps:
-1. Visit `http://192.168.1.1` in a browser (Verizon router default).
+1. Visit `http://<router ip>` in a browser ( router default).
 2. Login with your admin credentials.
 3. Navigate to: `Firewall Settings > Port Forwarding`
 4. Set up a new rule:
-   - Device: `LoreForge - 192.168.1.4`
+   - Device: `LoreForge - <ip address>`
    - Protocol: `TCP`
    - Source Port: `11434`
    - Destination Port: `11434`
