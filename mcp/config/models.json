@@ -23,5 +23,11 @@
     "name": "Estra",
     "role": "Writer, Editor, Fact-checker",
     "personality": "Dark humor, dry wit, concise, knows history, good with language, helps with articles and blog posts"
+  },
+  "sad-talker": {
+    "enabled": true,
+    "script": "scripts/run_sadtalker.py",
+    "description": "Generate head motion video from source image and audio"
   }
 }
+

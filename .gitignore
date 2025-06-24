@@ -1,5 +1,38 @@
-__pycache__/
-.env
-*.log
-*.sqlite3
+# Exclude model weights, checkpoints, audio/video outputs
+/models/
+/gpu_watch/audio_output/
+/gpu_watch/stable_output/
+/gpu_watch/stable_input/
+/gpu_watch/audio_input/
+/*.ckpt
+/*.safetensors
+/**/*.pth
+/**/*.pt
+
+# Node and Python artifacts
 node_modules/
+*.log
+*.sqlite
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+package-lock.json
+env/
+venv/
+
+# Docker local volumes
+docker/n8n/n8n-data/
+docker/monitoring/*-data/
+docker/monitoring/prometheus/prometheus.yml
+
+# Misc
+*.DS_Store
+*.swp
+*.bak
+*.old
+*.tmp
+
+# Optional: protect any personal config files
+*.env
+
