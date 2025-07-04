@@ -1,0 +1,13 @@
+services:
+  tortoise:
+    build: ./models/tortoise
+    container_name: tortoise-tts
+    volumes:
+      - ./models/tortoise:/app
+      - tortoise-data:/root/.cache/tortoise
+    ports:
+      - "5003:5000"  # Optional if adding API later
+    restart: unless-stopped
+
+volumes:
+  tortoise-data:

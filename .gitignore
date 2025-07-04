@@ -36,3 +36,4 @@ docker/monitoring/prometheus/prometheus.yml
 # Optional: protect any personal config files
 *.env
 
+.local_logs/

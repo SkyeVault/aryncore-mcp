@@ -1,0 +1,28 @@
+version: '3'
+
+services:
+  prometheus:
+    image: prom/prometheus
+    container_name: forge-prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+
+  node-exporter:
+    image: prom/node-exporter
+    container_name: forge-node-exporter
+    ports:
+      - "9100:9100"
+
+  dcgm-exporter:
+    image: nvidia/dcgm-exporter
+    container_name: dcgm-exporter
+    ports:
+      - "9445:9400"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+
