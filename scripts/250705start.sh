@@ -73,6 +73,12 @@ if [ -f "$SADTALKER_DIR/inference.py" ]; then
 else
     echo "SadTalker inference.py not found or install failed"
 fi
+# === SadTalker Torch Dependencies Fix ===
+echo "Checking SadTalker dependencies..."
+pip show torchvision >/dev/null 2>&1 || {
+    echo "Installing torchvision and torch..."
+    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+}
 
 # === Wrap-Up ===
 echo "Aryncore toolchain setup complete."
