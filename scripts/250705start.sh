@@ -1,4 +1,5 @@
 #!/bin/bash
+
 echo "Starting Aryncore MCP Toolchain Check..."
 
 # === Shared Paths ===
@@ -6,6 +7,7 @@ TOOLS=~/tools
 SADTALKER_DIR="$TOOLS/sad-talker"
 TORTOISE_DIR="$TOOLS/tortoise-tts"
 WHISPER_VENV="$TOOLS/whisper-venv"
+CHATTERBOX_DIR=~/chatterbox
 
 # === Ollama ===
 echo "Checking Ollama..."
@@ -73,12 +75,27 @@ if [ -f "$SADTALKER_DIR/inference.py" ]; then
 else
     echo "SadTalker inference.py not found or install failed"
 fi
+
 # === SadTalker Torch Dependencies Fix ===
 echo "Checking SadTalker dependencies..."
 pip show torchvision >/dev/null 2>&1 || {
     echo "Installing torchvision and torch..."
     pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 }
+
+# === Chatterbox Test ===
+echo "Checking Chatterbox installation..."
+if [ -d "$CHATTERBOX_DIR" ]; then
+    if [ -f "$CHATTERBOX_DIR/chatterbox/__init__.py" ]; then
+        echo "Running Chatterbox test:"
+        cd "$CHATTERBOX_DIR"
+        python3 -c "import chatterbox; print('Chatterbox import successful')" || echo "Failed to import Chatterbox"
+    else
+        echo "Chatterbox directory exists, but module file not found"
+    fi
+else
+    echo "Chatterbox not found at $CHATTERBOX_DIR"
+fi
 
 # === Wrap-Up ===
 echo "Aryncore toolchain setup complete."
