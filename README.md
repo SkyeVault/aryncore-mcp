@@ -5,18 +5,16 @@
 
 ## Agents
 
-- **Aryn** – Central coordinator (chat UI)
-- **Doc** – Senior mentor and planner
-- **Kona** – Creative and coding assistant
-- **Glyph** – Automation & spreadsheet bot
-- **Estra** – Writer, editor, and fact-checker
+- **Aryn** – Central coordinator (chat UI) - Gemma2b
+- **Doc** – Codellama
+- **tiny-bot** – irc chat bot
 
 ## Features
 
 - Runs local models via Ollama
 - Triggers GPU tasks (video, SDXL, audio) via file system events
 - Exposes LLMs via one central interface
-- Connects via NKN and is orchestrated with Docker & n8n
+- Orchestrated with Docker & n8n
 
 ---
 
