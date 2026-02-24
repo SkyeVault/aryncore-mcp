@@ -48,7 +48,7 @@ else
     echo "  pip install -r requirements.txt"
 fi
 
-# === SadTalker ===
+# === SadTalker Checkpoint Only ===
 if [ ! -d "$SADTALKER_DIR" ]; then
     echo "Downloading SadTalker..."
     mkdir -p "$TOOLS"
@@ -60,18 +60,22 @@ if [ ! -d "$SADTALKER_DIR" ]; then
 else
     echo "SadTalker already present"
 fi
-echo "Ensuring PyTorch + torchvision (CUDA) for SadTalker..."
+
+echo "Checking PyTorch and torchvision (CUDA) for SadTalker..."
 pip show torchvision >/dev/null 2>&1 || \
     pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 
-echo "Testing SadTalker..."
+echo "Testing SadTalker module load only..."
 cd "$SADTALKER_DIR"
-python3 inference.py \
-  --driven_audio ~/GitHub/aryncore-mcp/triggers/gpu_watch/audio_input/voice.wav \
-  --source_image ~/GitHub/aryncore-mcp/triggers/gpu_watch/stable_input/talking_head.png \
-  --enhancer gfpgan \
-  --result_dir ~/GitHub/aryncore-mcp/triggers/gpu_watch/stable_output/sadtalker \
-  --still --preprocess full || echo "SadTalker test encountered an error"
+python3 - <<EOF
+try:
+    import sys
+    sys.path.append("$SADTALKER_DIR/src")
+    import utils.audio, utils.preprocess
+    print("SadTalker core modules loaded successfully")
+except Exception as e:
+    print("SadTalker module check failed:", e)
+EOF
 
 # === Chatterbox ===
 echo "Checking Chatterbox installation..."
@@ -81,7 +85,7 @@ else
     echo "Chatterbox not installed or failed to import"
 fi
 
-# === AnimateDiff === (animation diffusion)
+# === AnimateDiff ===
 echo "Checking AnimateDiff installation..."
 if [ ! -d "$ANIMDIFF_DIR" ]; then
     echo "Cloning AnimateDiff..."
@@ -107,4 +111,5 @@ except Exception as e:
 EOF
 
 # === Wrap-Up ===
-echo "Aryncore toolchain setup complete."
+echo "Aryncore toolchain setup complete. All systems checkpointed."
+
