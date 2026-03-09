@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+aiosqlite
+httpx
+python-multipart
+watchdog
+requests
+paramiko

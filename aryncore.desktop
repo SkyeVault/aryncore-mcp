@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=ArynCore
+Comment=Local AI Desktop Hub
+Exec=bash -c "cd /home/lorelei/GitHub/aryncore-mcp && ./start.sh"
+Icon=/home/lorelei/GitHub/aryncore-mcp/frontend/public/aryncore.svg
+Terminal=true
+Categories=Utility;Development;
+StartupNotify=true

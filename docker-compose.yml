@@ -3,11 +3,18 @@ services:
     build: ./models/tortoise
     container_name: tortoise-tts
     volumes:
-      - ./models/tortoise:/app
+      # Only mount the model cache — do NOT mount /app or it overwrites the cloned repo
       - tortoise-data:/root/.cache/tortoise
     ports:
-      - "5003:5000"  # Optional if adding API later
+      - "5003:5003"
     restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
 
 volumes:
   tortoise-data:
