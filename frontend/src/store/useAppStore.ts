@@ -31,6 +31,10 @@ interface AppState {
   // Tools
   tools: Tool[]
   setTools: (t: Tool[]) => void
+
+  // P2P unread counts — keyed by addr or "group:<id>"
+  p2pUnread: Record<string, number>
+  setP2pUnread: (u: Record<string, number>) => void
 }
 
 export const PERSONAS = [
@@ -65,4 +69,7 @@ export const useAppStore = create<AppState>((set) => ({
 
   tools: [],
   setTools: (tools) => set({ tools }),
+
+  p2pUnread: {},
+  setP2pUnread: (p2pUnread) => set({ p2pUnread }),
 }))

@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ArynCore P2P Chat</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #0f1117;
+    --surface: #1a1d27;
+    --border:  #2a2d3e;
+    --accent:  #7c6ef7;
+    --muted:   #6b7280;
+    --text:    #e2e8f0;
+    --success: #22c55e;
+    --danger:  #ef4444;
+    --radius:  10px;
+    --font:    -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* ── Layout ── */
+  #app { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+  /* ── Top bar ── */
+  #topbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 18px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    background: var(--surface);
+  }
+  #topbar .logo {
+    width: 34px; height: 34px; border-radius: 8px;
+    background: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 15px; color: #fff;
+    flex-shrink: 0;
+  }
+  #topbar .title { font-weight: 700; font-size: 15px; }
+  #topbar .subtitle { font-size: 12px; color: var(--muted); }
+
+  #addr-box {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 5px 10px;
+    font-size: 12px;
+    flex: 1; min-width: 0;
+  }
+  #addr-box .label { color: var(--muted); white-space: nowrap; }
+  #addr-box .addr  { font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+  #copy-btn {
+    background: none; border: none; cursor: pointer; color: var(--muted);
+    padding: 2px; display: flex; align-items: center; flex-shrink: 0;
+  }
+  #copy-btn:hover { color: var(--text); }
+
+  #connect-btn {
+    display: flex; align-items: center; gap: 6px;
+    padding: 7px 16px; border-radius: 8px; border: none;
+    cursor: pointer; font-size: 13px; font-weight: 600;
+    background: var(--accent); color: #fff;
+    white-space: nowrap; flex-shrink: 0;
+    transition: opacity .15s;
+  }
+  #connect-btn.connected { background: rgba(239,68,68,.15); color: var(--danger); }
+  #connect-btn:disabled  { opacity: .5; cursor: not-allowed; }
+
+  #dot {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: var(--danger); flex-shrink: 0;
+    transition: background .3s;
+  }
+  #dot.on { background: var(--success); }
+
+  /* ── Error banner ── */
+  #error-banner {
+    display: none;
+    background: rgba(239,68,68,.12);
+    color: var(--danger);
+    padding: 7px 18px;
+    font-size: 13px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ── Body ── */
+  #body { display: flex; flex: 1; overflow: hidden; }
+
+  /* ── Sidebar ── */
+  #sidebar {
+    width: 240px; flex-shrink: 0;
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+  #sidebar-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  #sidebar-header span { font-size: 11px; color: var(--muted); font-weight: 600; letter-spacing: .05em; }
+  #add-btn {
+    background: none; border: none; cursor: pointer;
+    color: var(--accent); display: flex; padding: 2px;
+  }
+  #add-btn:hover { color: #a497ff; }
+
+  #contact-list { flex: 1; overflow-y: auto; }
+
+  .contact {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 12px; cursor: pointer;
+    border-left: 2px solid transparent;
+    transition: background .1s;
+  }
+  .contact:hover { background: rgba(124,110,247,.06); }
+  .contact.active {
+    background: rgba(124,110,247,.12);
+    border-left-color: var(--accent);
+  }
+  .contact .info { min-width: 0; flex: 1; }
+  .contact .name { font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .contact .short-addr { font-size: 11px; color: var(--muted); font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .contact .unread {
+    background: var(--accent); color: #fff;
+    border-radius: 10px; font-size: 11px; font-weight: 700;
+    padding: 1px 6px; flex-shrink: 0; margin-left: 4px;
+  }
+  .del-btn {
+    background: none; border: none; cursor: pointer;
+    color: var(--muted); opacity: 0; display: flex; padding: 2px;
+    transition: opacity .15s;
+  }
+  .contact:hover .del-btn { opacity: .6; }
+  .del-btn:hover { opacity: 1 !important; color: var(--danger); }
+
+  #no-contacts {
+    padding: 24px 16px;
+    color: var(--muted); font-size: 13px; text-align: center;
+  }
+
+  /* ── Chat area ── */
+  #chat { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  #chat-empty {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 10px; color: var(--muted);
+  }
+  #chat-empty svg { opacity: .25; }
+  #chat-empty p { font-size: 14px; }
+
+  #chat-inner { display: none; flex-direction: column; flex: 1; overflow: hidden; }
+  #chat-inner.visible { display: flex; }
+
+  #chat-header {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  #chat-header .chat-name  { font-weight: 600; font-size: 14px; }
+  #chat-header .chat-addr  {
+    font-size: 11px; color: var(--muted); font-family: monospace;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    max-width: 500px;
+  }
+
+  #messages {
+    flex: 1; overflow-y: auto;
+    padding: 16px; display: flex; flex-direction: column; gap: 8px;
+  }
+  #messages-empty { color: var(--muted); font-size: 13px; text-align: center; margin-top: 24px; }
+
+  .bubble-row { display: flex; }
+  .bubble-row.me  { justify-content: flex-end; }
+  .bubble-row.them { justify-content: flex-start; }
+
+  .bubble {
+    max-width: 70%; padding: 8px 12px;
+    font-size: 14px; line-height: 1.45;
+  }
+  .bubble-row.me .bubble {
+    background: var(--accent); color: #fff;
+    border-radius: 12px 12px 2px 12px;
+  }
+  .bubble-row.them .bubble {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px 12px 12px 2px;
+  }
+  .bubble .ts { font-size: 11px; margin-top: 4px; text-align: right; opacity: .55; }
+
+  #input-row {
+    padding: 12px 16px; border-top: 1px solid var(--border);
+    display: flex; gap: 8px; flex-shrink: 0;
+  }
+  #msg-input {
+    flex: 1; padding: 8px 12px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--surface);
+    color: var(--text); font-size: 14px; outline: none;
+    font-family: var(--font);
+    transition: border-color .15s;
+  }
+  #msg-input:focus { border-color: var(--accent); }
+  #msg-input:disabled { opacity: .5; }
+
+  #send-btn {
+    padding: 8px 16px; border-radius: 8px; border: none;
+    background: var(--accent); color: #fff; cursor: pointer;
+    display: flex; align-items: center; gap: 6px; font-size: 13px;
+    font-weight: 600; transition: opacity .15s;
+  }
+  #send-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+  /* ── Modal ── */
+  #modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,.6); z-index: 100;
+    align-items: center; justify-content: center;
+  }
+  #modal-overlay.open { display: flex; }
+  #modal {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 24px; width: 380px;
+    display: flex; flex-direction: column; gap: 16px;
+  }
+  #modal h3 { font-size: 16px; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label { font-size: 12px; color: var(--muted); }
+  .field input {
+    padding: 8px 12px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--bg);
+    color: var(--text); font-size: 13px; outline: none;
+    font-family: var(--font);
+    transition: border-color .15s;
+  }
+  .field input:focus { border-color: var(--accent); }
+  .modal-btns { display: flex; gap: 8px; justify-content: flex-end; }
+  .btn-ghost {
+    padding: 7px 16px; border-radius: 8px;
+    border: 1px solid var(--border); background: transparent;
+    color: var(--text); cursor: pointer; font-size: 13px;
+  }
+  .btn-primary {
+    padding: 7px 16px; border-radius: 8px; border: none;
+    background: var(--accent); color: #fff; cursor: pointer; font-size: 13px;
+    font-weight: 600;
+  }
+  .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+
+  /* ── Scrollbars ── */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- Top bar -->
+  <div id="topbar">
+    <div class="logo">P</div>
+    <div>
+      <div class="title">P2P Chat</div>
+      <div class="subtitle">ArynCore Companion · NKN</div>
+    </div>
+    <div id="addr-box">
+      <span class="label">Your address:</span>
+      <span class="addr" id="my-addr">—</span>
+      <button class="btn-ghost" id="copy-btn" title="Copy address" style="border:none;background:none;padding:2px;cursor:pointer;color:var(--muted);display:flex;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      </button>
+    </div>
+    <div id="dot" title="NKN status"></div>
+    <button id="connect-btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+      Connect to NKN
+    </button>
+  </div>
+
+  <!-- Error banner -->
+  <div id="error-banner"></div>
+
+  <!-- Body -->
+  <div id="body">
+
+    <!-- Sidebar -->
+    <div id="sidebar">
+      <div id="sidebar-header">
+        <span>CONTACTS</span>
+        <button id="add-btn" title="Add contact">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+        </button>
+      </div>
+      <div id="contact-list">
+        <div id="no-contacts">No contacts yet.<br>Add one or wait for an<br>incoming message.</div>
+      </div>
+    </div>
+
+    <!-- Chat area -->
+    <div id="chat">
+      <div id="chat-empty">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+        <p id="empty-hint">Select a contact to start chatting</p>
+      </div>
+
+      <div id="chat-inner">
+        <div id="chat-header">
+          <div class="chat-name"  id="chat-name"></div>
+          <div class="chat-addr"  id="chat-addr"></div>
+        </div>
+        <div id="messages"></div>
+        <div id="input-row">
+          <input id="msg-input" type="text" placeholder="Type a message…" disabled />
+          <button id="send-btn" disabled>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            Send
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Add-contact modal -->
+<div id="modal-overlay">
+  <div id="modal">
+    <h3>Add Contact</h3>
+    <div class="field">
+      <label>NKN Address</label>
+      <input id="new-addr"  type="text" placeholder="identifier.pubkey" />
+    </div>
+    <div class="field">
+      <label>Label (optional)</label>
+      <input id="new-label" type="text" placeholder="Nickname" />
+    </div>
+    <div class="modal-btns">
+      <button class="btn-ghost" id="cancel-btn">Cancel</button>
+      <button class="btn-primary" id="save-btn" disabled>Add</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---------------------------------------------------------------------------
+// State
+// ---------------------------------------------------------------------------
+let ws           = null;
+let connected    = false;
+let myAddr       = null;
+let contacts     = [];           // { addr, label }
+let history      = {};           // addr → [{ from, text, timestamp }]
+let activeAddr   = null;
+let unread       = {};           // addr → count
+
+// ---------------------------------------------------------------------------
+// WebSocket connection to the local server
+// ---------------------------------------------------------------------------
+function connectWs() {
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  ws = new WebSocket(`${proto}://${location.host}`);
+
+  ws.onopen = () => {
+    // Request initial state after WS connects
+    fetch('/api/state').then(r => r.json()).then(s => {
+      contacts = s.contacts || [];
+      history  = s.history  || {};
+      renderContacts();
+      if (activeAddr) renderMessages(activeAddr);
+    });
+  };
+
+  ws.onmessage = (ev) => {
+    const data = JSON.parse(ev.data);
+    switch (data.type) {
+      case 'status':
+        connected = data.connected;
+        myAddr    = data.addr;
+        updateStatus();
+        break;
+      case 'connected':
+        connected = true;
+        myAddr    = data.addr;
+        updateStatus();
+        break;
+      case 'disconnected':
+        connected = false;
+        myAddr    = null;
+        updateStatus();
+        break;
+      case 'message':
+        onIncoming(data);
+        break;
+      case 'error':
+        showError(data.message);
+        break;
+    }
+  };
+
+  ws.onclose = () => setTimeout(connectWs, 3000);
+}
+
+// ---------------------------------------------------------------------------
+// UI helpers
+// ---------------------------------------------------------------------------
+function updateStatus() {
+  const dot  = document.getElementById('dot');
+  const btn  = document.getElementById('connect-btn');
+  const addr = document.getElementById('my-addr');
+  const inp  = document.getElementById('msg-input');
+  const send = document.getElementById('send-btn');
+
+  dot.className  = connected ? 'on' : '';
+  addr.textContent = myAddr || '—';
+
+  if (connected) {
+    btn.className   = 'connected';
+    btn.innerHTML   = svgWifiOff() + ' Disconnect';
+  } else {
+    btn.className   = '';
+    btn.innerHTML   = svgWifi() + ' Connect to NKN';
+  }
+
+  inp.disabled  = !(connected && activeAddr);
+  send.disabled = !(connected && activeAddr);
+  if (inp.disabled) inp.placeholder = connected ? 'Select a contact' : 'Connect to NKN first';
+  else              inp.placeholder = 'Type a message…';
+}
+
+function renderContacts() {
+  const list = document.getElementById('contact-list');
+  const none = document.getElementById('no-contacts');
+  if (contacts.length === 0) {
+    none.style.display = 'block';
+    list.querySelectorAll('.contact').forEach(el => el.remove());
+    return;
+  }
+  none.style.display = 'none';
+
+  // Remove old rows
+  list.querySelectorAll('.contact').forEach(el => el.remove());
+
+  contacts.forEach(c => {
+    const row = document.createElement('div');
+    row.className = 'contact' + (c.addr === activeAddr ? ' active' : '');
+    row.dataset.addr = c.addr;
+
+    const badge = (unread[c.addr] || 0) > 0
+      ? `<span class="unread">${unread[c.addr]}</span>` : '';
+
+    row.innerHTML = `
+      <div class="info">
+        <div class="name">${esc(c.label)}</div>
+        <div class="short-addr">${esc(c.addr)}</div>
+      </div>
+      ${badge}
+      <button class="del-btn" title="Remove" data-addr="${esc(c.addr)}">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/>
+          <path d="M9 6V4h6v2"/>
+        </svg>
+      </button>`;
+
+    row.addEventListener('click', () => selectContact(c.addr));
+    row.querySelector('.del-btn').addEventListener('click', e => {
+      e.stopPropagation();
+      deleteContact(c.addr);
+    });
+    list.appendChild(row);
+  });
+}
+
+function selectContact(addr) {
+  activeAddr = addr;
+  unread[addr] = 0;
+  renderContacts();
+
+  const c    = contacts.find(x => x.addr === addr);
+  const name = c ? c.label : addr;
+
+  document.getElementById('chat-empty').style.display = 'none';
+  const inner = document.getElementById('chat-inner');
+  inner.classList.add('visible');
+  document.getElementById('chat-name').textContent = name;
+  document.getElementById('chat-addr').textContent = addr;
+
+  renderMessages(addr);
+  updateStatus();
+}
+
+function renderMessages(addr) {
+  const box  = document.getElementById('messages');
+  const msgs = history[addr] || [];
+  box.innerHTML = '';
+
+  if (msgs.length === 0) {
+    box.innerHTML = '<div id="messages-empty">No messages yet</div>';
+    return;
+  }
+
+  msgs.forEach(m => {
+    const row = document.createElement('div');
+    row.className = `bubble-row ${m.from}`;
+    row.innerHTML = `<div class="bubble"><div>${esc(m.text)}</div><div class="ts">${fmtTime(m.timestamp)}</div></div>`;
+    box.appendChild(row);
+  });
+
+  box.scrollTop = box.scrollHeight;
+}
+
+function onIncoming(data) {
+  const { src, text, timestamp } = data;
+
+  if (!history[src]) history[src] = [];
+  history[src].push({ from: 'them', text, timestamp });
+
+  if (!contacts.find(c => c.addr === src)) {
+    contacts.push({ addr: src, label: src.slice(0, 18) + '…' });
+  }
+
+  if (activeAddr === src) {
+    renderMessages(src);
+  } else {
+    unread[src] = (unread[src] || 0) + 1;
+  }
+
+  renderContacts();
+}
+
+function deleteContact(addr) {
+  contacts = contacts.filter(c => c.addr !== addr);
+  fetch(`/api/contacts/${encodeURIComponent(addr)}`, { method: 'DELETE' });
+  if (activeAddr === addr) {
+    activeAddr = null;
+    document.getElementById('chat-inner').classList.remove('visible');
+    document.getElementById('chat-empty').style.display = 'flex';
+  }
+  renderContacts();
+  updateStatus();
+}
+
+function showError(msg) {
+  const banner = document.getElementById('error-banner');
+  banner.textContent = msg;
+  banner.style.display = 'block';
+  clearTimeout(banner._t);
+  banner._t = setTimeout(() => { banner.style.display = 'none'; }, 4000);
+}
+
+// ---------------------------------------------------------------------------
+// Send message
+// ---------------------------------------------------------------------------
+function sendMessage() {
+  const inp  = document.getElementById('msg-input');
+  const text = inp.value.trim();
+  if (!text || !activeAddr || !connected) return;
+
+  wsSend({ type: 'send', dest: activeAddr, text });
+
+  if (!history[activeAddr]) history[activeAddr] = [];
+  history[activeAddr].push({ from: 'me', text, timestamp: Date.now() });
+  renderMessages(activeAddr);
+  inp.value = '';
+}
+
+function wsSend(obj) {
+  if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(obj));
+}
+
+// ---------------------------------------------------------------------------
+// Add-contact modal
+// ---------------------------------------------------------------------------
+function openModal() {
+  document.getElementById('modal-overlay').classList.add('open');
+  document.getElementById('new-addr').value  = '';
+  document.getElementById('new-label').value = '';
+  document.getElementById('save-btn').disabled = true;
+  setTimeout(() => document.getElementById('new-addr').focus(), 50);
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+}
+
+function saveContact() {
+  const addr  = document.getElementById('new-addr').value.trim();
+  const label = document.getElementById('new-label').value.trim() || addr.slice(0, 18) + '…';
+  if (!addr) return;
+
+  if (!contacts.find(c => c.addr === addr)) {
+    contacts.push({ addr, label });
+    fetch('/api/contacts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ addr, label }),
+    });
+  }
+  renderContacts();
+  closeModal();
+  selectContact(addr);
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function fmtTime(ts) {
+  return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function svgWifi() {
+  return `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>`;
+}
+
+function svgWifiOff() {
+  return `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a11 11 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.56 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>`;
+}
+
+// ---------------------------------------------------------------------------
+// Event listeners
+// ---------------------------------------------------------------------------
+document.getElementById('connect-btn').addEventListener('click', () => {
+  wsSend({ type: connected ? 'stop' : 'start' });
+});
+
+document.getElementById('copy-btn').addEventListener('click', () => {
+  if (!myAddr) return;
+  navigator.clipboard.writeText(myAddr).then(() => {
+    const btn = document.getElementById('copy-btn');
+    btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>`;
+    setTimeout(() => {
+      btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+    }, 2000);
+  });
+});
+
+document.getElementById('add-btn').addEventListener('click', openModal);
+document.getElementById('cancel-btn').addEventListener('click', closeModal);
+document.getElementById('modal-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-overlay')) closeModal();
+});
+
+document.getElementById('new-addr').addEventListener('input', () => {
+  document.getElementById('save-btn').disabled = !document.getElementById('new-addr').value.trim();
+});
+
+document.getElementById('save-btn').addEventListener('click', saveContact);
+
+document.getElementById('new-addr').addEventListener('keydown',  e => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('new-label').focus(); } });
+document.getElementById('new-label').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); saveContact(); } });
+
+document.getElementById('send-btn').addEventListener('click', sendMessage);
+document.getElementById('msg-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+
+// ---------------------------------------------------------------------------
+// Boot
+// ---------------------------------------------------------------------------
+connectWs();
+updateStatus();
+</script>
+</body>
+</html>

@@ -9,6 +9,7 @@ import { N8nHub } from './pages/N8nHub'
 import { ToolLibrary } from './pages/ToolLibrary'
 import { WorkflowBuilder } from './pages/WorkflowBuilder'
 import { Deploy } from './pages/Deploy'
+import { P2PChat } from './pages/P2PChat'
 import { useAppStore } from './store/useAppStore'
 import { getServers, getN8nInstances, getTools } from './lib/api'
 
@@ -35,6 +36,7 @@ function AppInner() {
           <Route path="/tools" element={<ToolLibrary />} />
           <Route path="/builder" element={<WorkflowBuilder />} />
           <Route path="/publish" element={<Deploy />} />
+          <Route path="/p2p" element={<P2PChat />} />
         </Routes>
       </div>
     </div>

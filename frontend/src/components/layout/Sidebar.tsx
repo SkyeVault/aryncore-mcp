@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, MessageSquare, Cpu, Server, Workflow,
-  Wrench, GitBranch, Upload,
+  Wrench, GitBranch, Upload, Radio,
 } from 'lucide-react'
 import { useAppStore } from '../../store/useAppStore'
 
@@ -14,10 +14,13 @@ const NAV = [
   { to: '/tools', icon: Wrench, label: 'Tools' },
   { to: '/builder', icon: GitBranch, label: 'Builder' },
   { to: '/publish', icon: Upload, label: 'Publish' },
+  { to: '/p2p', icon: Radio, label: 'P2P Chat' },
 ]
 
 export function Sidebar() {
-  const status = useAppStore(s => s.status)
+  const status     = useAppStore(s => s.status)
+  const p2pUnread  = useAppStore(s => s.p2pUnread)
+  const p2pTotal   = Object.values(p2pUnread).reduce((a, b) => a + b, 0)
 
   return (
     <aside style={{
@@ -56,9 +59,21 @@ export function Sidebar() {
             background: isActive ? 'rgba(124,110,247,0.12)' : 'transparent',
             textDecoration: 'none',
             transition: 'all 0.15s',
+            position: 'relative',
           })}
         >
           <Icon size={20} />
+          {to === '/p2p' && p2pTotal > 0 && (
+            <span style={{
+              position: 'absolute', top: 4, right: 4,
+              minWidth: 16, height: 16, borderRadius: 8,
+              background: 'var(--danger)', color: '#fff',
+              fontSize: 10, fontWeight: 700, lineHeight: '16px',
+              textAlign: 'center', padding: '0 3px',
+            }}>
+              {p2pTotal > 99 ? '99+' : p2pTotal}
+            </span>
+          )}
         </NavLink>
       ))}
 

@@ -1,0 +1,14 @@
+{
+  "name": "aryncore-p2p-companion",
+  "version": "1.0.0",
+  "description": "Standalone NKN P2P chat client — companion to ArynCore MCP",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "nkn-client": "^0.7.3",
+    "ws": "^8.14.2"
+  }
+}
