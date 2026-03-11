@@ -36,4 +36,7 @@ docker/monitoring/prometheus/prometheus.yml
 # Optional: protect any personal config files
 *.env
 
+# NKN wallet (contains private key — never commit)
+nkn/wallet.json
+
 .local_logs/
