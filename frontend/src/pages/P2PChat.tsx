@@ -341,8 +341,8 @@ export function P2PChat() {
     const file = e.target.files?.[0]
     if (!file) return
     e.target.value = ''
-    if (file.size > 512 * 1024) {
-      setErrMsg('Image too large — max 512 KB')
+    if (file.size > 5 * 1024 * 1024) {
+      setErrMsg('Image too large — max 5 MB')
       setTimeout(() => setErrMsg(null), 4000)
       return
     }

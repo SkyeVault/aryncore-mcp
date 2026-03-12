@@ -59,7 +59,7 @@ async def _read_bridge_output(proc: asyncio.subprocess.Process) -> None:
                 _bridge_connected = True
             await _broadcast(data)
         except Exception as e:
-            logger.debug("Bridge parse error: %s", e)
+            logger.warning("Bridge read error: %s", e)
     _bridge_connected = False
     _bridge_addr = None
     await _broadcast({"type": "disconnected"})
@@ -70,7 +70,12 @@ async def _log_bridge_stderr(proc: asyncio.subprocess.Process) -> None:
         line = await proc.stderr.readline()
         if not line:
             break
-        logger.warning("NKN bridge: %s", line.decode().rstrip())
+        text = line.decode().rstrip()
+        # NKN SDK reconnection noise — demote to debug
+        if "WebSocket unexpectedly closed" in text or "WebSocket error" in text:
+            logger.debug("NKN bridge: %s", text)
+        else:
+            logger.warning("NKN bridge: %s", text)
 
 
 async def _start_bridge() -> None:
@@ -90,6 +95,7 @@ async def _start_bridge() -> None:
         stdin=asyncio.subprocess.PIPE,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
+        limit=10 * 1024 * 1024,  # 10 MB — supports base64-encoded images up to ~7.5 MB
         env=env,
         cwd=os.path.abspath(repo_root),
     )

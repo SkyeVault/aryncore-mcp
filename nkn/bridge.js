@@ -62,18 +62,43 @@ const wallet = loadOrCreateWallet();
 const client = new MultiClient({
   identifier:        IDENTIFIER,
   seed:              wallet.getSeed(),
-  numSubClients:     4,
+  numSubClients:     2,
   originalClient:    true,
   msgHoldingSeconds: 8_640_000,   // 100 days
 });
 
+let _monitorInterval = null;
+
 client.onConnect(() => {
   emit({ type: 'connected', addr: client.addr });
+
+  // Poll sub-client readiness; emit disconnected if all connections drop
+  if (!_monitorInterval) {
+    _monitorInterval = setInterval(() => {
+      const ready = client.readyClientIDs;
+      if (Array.isArray(ready) && ready.length === 0) {
+        emit({ type: 'disconnected' });
+        clearInterval(_monitorInterval);
+        _monitorInterval = null;
+      }
+    }, 8000);
+  }
 });
 
 client.onConnectFailed(() => {
   emit({ type: 'error', message: 'Failed to connect to NKN network' });
 });
+
+// Dedup cache: id → expiry ms.  Prevents re-delivery after sub-client reconnects.
+const _seen = new Map();
+function isDuplicate(id) {
+  if (!id) return false;
+  const now = Date.now();
+  for (const [k, exp] of _seen) if (exp < now) _seen.delete(k);
+  if (_seen.has(id)) return true;
+  _seen.set(id, now + 300_000); // 5-minute TTL
+  return false;
+}
 
 client.onMessage(({ src, payload }) => {
   let msg = {};
@@ -82,6 +107,8 @@ client.onMessage(({ src, payload }) => {
   const contentType = msg.contentType || 'text';
   const content     = msg.content ?? msg.text ?? String(payload);
   const msgId       = msg.id;
+
+  if (isDuplicate(msgId)) return;
 
   // Incoming receipt — update a sent message's delivery status
   if (contentType === 'receipt') {
